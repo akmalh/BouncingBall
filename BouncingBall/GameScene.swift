@@ -7,39 +7,66 @@
 //
 
 import SpriteKit
+import CoreMotion
 
 class GameScene: SKScene {
+    
+    var motionManager = CMMotionManager()
     override func didMoveToView(view: SKView) {
-        /* Setup your scene here */
-        let myLabel = SKLabelNode(fontNamed:"Chalkduster")
-        myLabel.text = "Hello, World!";
-        myLabel.fontSize = 65;
-        myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
         
-        self.addChild(myLabel)
+        /* Setup your scene here */
+        
+        // gravity = 9.8 meters/sec^2
+        self.physicsWorld.gravity = CGVectorMake(0, 0)
+        let sceneBody = SKPhysicsBody(edgeLoopFromRect: self.frame)
+        sceneBody.friction = 0
+        self.physicsBody = sceneBody
+        
+        // add a ball in the center of the screen
+        var positionOfTouch = CGPoint(x: self.frame.size.width/2, y: self.frame.size.height/2)
+        println("x: \(positionOfTouch.x) y: \(positionOfTouch.y)")
+        var ball = SKShapeNode(circleOfRadius: 15)
+        
+        ball.fillColor = SKColor.redColor()
+        ball.position = positionOfTouch
+        ball.physicsBody = SKPhysicsBody(circleOfRadius: 15)
+        ball.physicsBody?.affectedByGravity = true
+        ball.physicsBody?.restitution = 1   // the ball will have a perfect bounce
+        ball.physicsBody?.linearDamping = 0 // no air resistance
+        self.addChild(ball)
+        
+        // get sensed data - device motion
+        motionManager.deviceMotionUpdateInterval = 0.025
+        
+        motionManager.startDeviceMotionUpdatesToQueue(NSOperationQueue.currentQueue(),
+            withHandler: { (motion: CMDeviceMotion!, error: NSError!) -> Void
+            in
+            let gravity: CMAcceleration = motion.gravity
+            self.physicsWorld.gravity = CGVectorMake(CGFloat(gravity.x), CGFloat(gravity.y))
+            })
+        
     }
     
     override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
-        /* Called when a touch begins */
-        
-        for touch in (touches as! Set<UITouch>) {
-            let location = touch.locationInNode(self)
+            /* Called when a touch begins */
             
-            let sprite = SKSpriteNode(imageNamed:"Spaceship")
+            for touch: AnyObject in touches {
+            var positionOfTouch = touch.locationInNode(self)
+            println("x: \(positionOfTouch.x) y: \(positionOfTouch.y)")
+            var ball = SKShapeNode(circleOfRadius: 15)
+            ball.fillColor = SKColor.redColor()
+            ball.position = positionOfTouch
+            ball.physicsBody = SKPhysicsBody(circleOfRadius: 15)
+            ball.physicsBody?.affectedByGravity = true
+            ball.physicsBody?.restitution = 1   // the ball will have a perfect bounce
+            ball.physicsBody?.linearDamping = 0 // no air resistance
+            self.addChild(ball)
             
-            sprite.xScale = 0.5
-            sprite.yScale = 0.5
-            sprite.position = location
-            
-            let action = SKAction.rotateByAngle(CGFloat(M_PI), duration:1)
-            
-            sprite.runAction(SKAction.repeatActionForever(action))
-            
-            self.addChild(sprite)
-        }
+            }
     }
-   
+    
     override func update(currentTime: CFTimeInterval) {
-        /* Called before each frame is rendered */
+            /* Called before each frame is rendered */
     }
 }
+
